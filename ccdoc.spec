@@ -10,6 +10,7 @@ Source1:	ctf2xml.tar.gz
 Patch0:		%{name}_v07a.medoosa.patch
 Patch1:		%{name}-opt.patch
 URL:		http://www.joelinoff.com/ccdoc/
+BuildRequires:	libstdc++-devel
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description

@@ -1,7 +1,7 @@
 Summary:	A program that generates HTML documentation from C++ source code.
 Name:		ccdoc
 Version:	0.7a
-Release:	1m
+Release:	1
 Copyright:	Freely distributable
 Group:		Development/Tools
 URL:		http://www.joelinoff.com/ccdoc/

@@ -7,7 +7,8 @@ License:	Freely distributable
 Group:		Development/Tools
 Source0:	http://www.joelinoff.com/ccdoc_old/%{name}_v07a_src_taz.exe
 Source1:	ctf2xml.tar.gz
-Patch0:		ccdoc_v07a.medoosa.patch
+Patch0:		%{name}_v07a.medoosa.patch
+Patch1:		%{name}-opt.patch
 URL:		http://www.joelinoff.com/ccdoc/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -30,10 +31,12 @@ tar xfz %{SOURCE1}
 cd ../../ccdoc_dev
 perl tools/ccdoc_pc2unix.pl
 cd ..
-%patch -p1
+%patch0 -p1
+%patch1 -p1
 
 %build
 cd ccdoc_dev
+OPTFLAGS="%{rpmcflags}"; export OPTFLAGS
 perl tools/ccdoc_bld.pl
 
 %{__make} -C ccdoc/ctf2xml

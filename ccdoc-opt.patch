@@ -1,0 +1,43 @@
+--- ccdoc_v07a/ccdoc_dev/tools/mkmk.pl.orig	Wed Feb  5 13:07:25 2003
++++ ccdoc_v07a/ccdoc_dev/tools/mkmk.pl	Wed Feb  5 13:14:09 2003
+@@ -188,7 +188,7 @@
+ 	    else {
+ 		print MK "LINKFLAGS   =  -o \n";
+ 		print MK "DBGLINKFLAGS =\n";
+-		print MK "OPTCPPFLAGS = -O4\n";
++		print MK "OPTCPPFLAGS = \$(OPTFLAGS)\n";
+ 		print MK "OPTLINKFLAGS =\n";
+ 	    }
+ 	}
+@@ -196,10 +196,10 @@
+ 	    print MK "LINK        = ar\n";
+ 	    print MK "LINKFLAGS   = -rcv\n";
+ 	    print MK "DBGLINKFLAGS =\n";
+-	    print MK "OPTCPPFLAGS = -O\n";
++	    print MK "OPTCPPFLAGS = \$(OPTFLAGS)\n";
+ 	    print MK "OPTLINKFLAGS =\n";
+ 	}
+-	print MK "DBGCPPFLAGS = -g -D_DEBUG\n";
++	print MK "DBGCPPFLAGS = \$(OPTFLAGS) -D_DEBUG\n";
+ 	if($libjdl) {
+ 	    print MK "DBGLIBS     = ../../libjdl/bin_${arch}_dbg/libjdl.a\n";
+ 	}
+--- ccdoc_v07a/ccdoc_dev/ccdoc/ctf2xml/Makefile.orig	Sun Mar 24 22:17:28 2002
++++ ccdoc_v07a/ccdoc_dev/ccdoc/ctf2xml/Makefile	Wed Feb  5 13:16:45 2003
+@@ -8,7 +8,6 @@
+ MANYWARNFLAGS=\
+ -pipe \
+ -ansi -pedantic-errors \
+--O \
+ -Wall \
+ -W \
+ -Wuninitialized \
+@@ -19,7 +18,7 @@
+ -Woverloaded-virtual \
+ #-fsigned-char -fshort-enums -funroll-loops
+ 
+-CFLAGS=-g $(MANYWARNFLAGS) $(CCDOCINC)
++CFLAGS=$(MANYWARNFLAGS) $(CCDOCINC) $(OPTFLAGS)
+ 
+ CXXFLAGS=$(CFLAGS)
+ CCDOCOBJDIR=$(CCDOCDIR)/ccdoc_dev/ccdoc/bin_linux_dbg

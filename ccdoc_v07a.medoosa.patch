@@ -1,0 +1,460 @@
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdoc.cpp ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdoc.cpp
+--- ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdoc.cpp	Sat Apr 14 22:55:23 2001
++++ ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdoc.cpp	Sun Apr 15 00:08:20 2001
+@@ -365,7 +365,7 @@
+      "  -[no]locals     Report local items. Default is on.\n"
+      "  -[no]macros     Process macros.  Default is off.\n"
+      "  -mcf            Obsolete, output the old multi column format.\n"
+-     "  -[no]private    Report private items. Default is on.\n"
++     "  -[no]private    Report private items. Default is off.\n"
+      "  -[no]protected  Report protected items. Default is on.\n"
+      "  -[no]public     Report public items. Default is on.\n"
+      "  -root <name>    The alternate name for [ROOT].\n"
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdoclexer.cpp ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdoclexer.cpp
+--- ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdoclexer.cpp	Sat Apr 14 22:55:23 2001
++++ ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdoclexer.cpp	Sun Apr 15 00:08:20 2001
+@@ -599,14 +599,14 @@
+       }
+       else {
+ 	p--;
+-	if(*p>='0' || *p<='9')
++	if(*p>='0' && *p<='9') // BUG: was ||
+ 	  p++;
+ 	file.PutChar(ch);
+       }
+     }
+     else {
+       p--;
+-      if(*p>='0' || *p<='9')
++      if(*p>='0' && *p<='9') // BUG: was ||
+ 	p++;
+       file.PutChar(ch);
+     }
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdocphase3.cpp ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdocphase3.cpp
+--- ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdocphase3.cpp	Sat Apr 14 22:55:23 2001
++++ ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdocphase3.cpp	Sun Apr 15 00:08:20 2001
+@@ -427,7 +427,7 @@
+ #else
+ 	    ::fprintf(fp,"%s",file);
+ #endif
+-	    ::fprintf(fp,"\">",m_SourceURL.str(),file);
++	    ::fprintf(fp,"\">");
+ 	    ::fprintf(fp,"%s",file);
+ 	    ::fprintf(fp,"</a>");
+ 	  }
+@@ -2196,7 +2196,7 @@
+       // Look for the ':'
+       {for(ulong i=0;i<nd->GetNumItems();i++) {
+ 	const char* d = nd->GetDataString(i);
+-	if(*d == ':') {
++	if(*d == ':' && *(d+1) != ':') { // BUG for nested name specfiers
+ 	  // This class is derived. Report the derived relations.
+ 	  i++;
+ 	  while(i<nd->GetNumItems()) {
+@@ -2221,21 +2221,30 @@
+ 	    // TODO: generate the class xref given the class name.
+ 	    ::fprintf(fp,"  <dt> &nbsp;&nbsp;&nbsp;&nbsp;extends ");
+ 	    const char* scope = "private";
++	    const char* isvirtual = "";
++	    for(;beg<end;beg++) {
+ 	    d = nd->GetDataString(beg);
+ 	    if(!::strcmp(d,"public")) {
+ 	      scope = d;
+-	      beg++;
+ 	    }
+ 	    else if(!::strcmp(d,"protected")) {
+ 	      scope = d;
+-	      beg++;
++	      }
++	      else if(!::strcmp(d,"private")) {
++		scope = d;
++	      }
++	      else if(!::strcmp(d,"virtual")) {
++		isvirtual = d;
++	      }
++	      else
++		break;
+ 	    }
+ 	    {for(ulong j=beg;j<end;j++) {
+ 	      if(j>beg)
+ 		::fprintf(fp," ");
+ 	      WriteItemWithXref(ctf,fp,nd,j);
+ 	    }}
+-	    ::fprintf(fp," as %s</dt>\n",scope);
++	    ::fprintf(fp," as %s %s</dt>\n",isvirtual,scope);
+ 	    i++;
+ 	  }
+ 	}
+@@ -2428,7 +2437,7 @@
+ 	if(node) {
+ 	  ::fprintf(fp,"<tr valign=top>\n");
+ 	  if(mapnodes->GetNumItems()>1) {
+-	    ::fprintf(fp,"<td align=right>",i);
++	    ::fprintf(fp,"<td align=right>");
+ 	    ::fprintf(fp,"<font color=red>%d</font>",i);
+ 	    ::fprintf(fp,"\n");
+ 	  }
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdocphase3.h ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdocphase3.h
+--- ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdocphase3.h	Sat Apr 14 22:55:23 2001
++++ ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdocphase3.h	Sun Apr 15 00:08:20 2001
+@@ -210,7 +210,6 @@
+ 	   const char* trailer,
+ 	   bool mcfFlag);
+ private:
+-  WriteTop();
+   const char* GetCurrTime();
+   const char* GetProgram();
+ private:
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdocprep.cpp ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdocprep.cpp
+--- ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdocprep.cpp	Sat Apr 14 22:55:23 2001
++++ ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdocprep.cpp	Sun Apr 15 00:08:20 2001
+@@ -61,6 +61,12 @@
+   m_GlobalDefsFlag.Append(b);
+ }
+ 
++static void CopyJustNewlines(FILE* ofp, char *buf) {
++  for(char *p=buf; p != NULL && *p != '\0'; ++p) 
++    if (*p == '\n') 
++      ::fprintf(ofp,"\n");
++}
++
+ // ========================================================================
+ // Pre-process the specified file.
+ // ========================================================================
+@@ -113,7 +119,7 @@
+         ::fprintf(ofp,"%s",linebuf);
+       }
+       else {
+-        ::fprintf(ofp,"\n");
++	CopyJustNewlines(ofp, linebuf);
+       }
+       continue;
+     }
+@@ -135,7 +141,7 @@
+         ::fprintf(ofp,"%s",linebuf1);
+       }
+       else {
+-        ::fprintf(ofp,"\n");
++	CopyJustNewlines(ofp, linebuf1);
+       }
+       continue;
+     }
+@@ -188,7 +194,7 @@
+         ::fprintf(ofp,"%s",linebuf1);
+       }
+       else {
+-        ::fprintf(ofp,"\n");
++	CopyJustNewlines(ofp, linebuf1);
+       }
+       continue;
+     }
+@@ -208,7 +214,7 @@
+         ::fprintf(ofp,"%s",linebuf1);
+       }
+       else {
+-        ::fprintf(ofp,"\n");
++	CopyJustNewlines(ofp, linebuf1);
+       }
+       continue;
+     }
+@@ -231,7 +237,7 @@
+         skipElse[level] = true;
+         skipEndif[level] = true;
+         level++;
+-        ::fprintf(ofp,"\n");
++	CopyJustNewlines(ofp, linebuf1);
+         continue;
+       }
+       else {
+@@ -239,7 +245,7 @@
+         isSymDefinedFlag = IsSymDefined(symname);
+         skipElse[level] = false;
+         skipEndif[level] = false;
+-        ::fprintf(ofp,"\n");
++	CopyJustNewlines(ofp, linebuf1);
+       }
+     }
+ 
+@@ -257,13 +263,13 @@
+     // ================================================
+     if(!::strncmp(keyword,"else",4)) {
+       skipFlag = skipElse[level-1];
+-      ::fprintf(ofp,"\n");
++      CopyJustNewlines(ofp, linebuf1);
+       continue;
+     }
+     if(!::strncmp(keyword,"endif",4)) {
+       level--;
+       skipFlag = skipEndif[level];
+-      ::fprintf(ofp,"\n");
++      CopyJustNewlines(ofp, linebuf1);
+       continue;
+     }
+ 
+@@ -274,7 +280,7 @@
+       ::fprintf(ofp,"%s",linebuf1);
+     }
+     else {
+-      ::fprintf(ofp,"\n");
++      CopyJustNewlines(ofp, linebuf1);
+     }
+   }
+   if(m_DebugFlag)
+@@ -511,11 +517,13 @@
+ 		    ch=GetNextChar(file,lineno);
+ 		    *p++ = ch;
+ 		    if('/' == ch) {
+-		      *p = 0;
+ 		      // Skip to the EOL.
+ 		      for(ch=GetNextChar(file,lineno);
+ 			  ch!=0 && ch!='\n';
+ 			  ch=GetNextChar(file,lineno));
++		      if('\n' == ch)
++			*p++ = '\n';
++		      *p = 0;
+ 		      return true;
+ 		    }
+ 		  }
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdocprepexpr.cpp ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdocprepexpr.cpp
+--- ccdoc_v07a.dist/ccdoc_dev/ccdoc/src/ccdocprepexpr.cpp	Sat Apr 14 22:55:23 2001
++++ ccdoc_v07a/ccdoc_dev/ccdoc/src/ccdocprepexpr.cpp	Sun Apr 15 00:08:20 2001
+@@ -207,10 +207,13 @@
+     {
+       long b1 = 0;
+       long b2 = 0;
+-      if(m_Left)
+-	b1 = m_Left->Eval(obj,lineno,src,linebuf,debugFlag,level+1,flag);
++      // apparently thay are in reverse order
+       if(m_Right)
+ 	b2 = m_Right->Eval(obj,lineno,src,linebuf,debugFlag,level+1,flag);
++      if (!b2) { //short circuit boolean evaluation
++	if(m_Left)
++	  b1 = m_Left->Eval(obj,lineno,src,linebuf,debugFlag,level+1,flag);
++      }
+       if(b1 || b2)
+ 	b = 1;
+     }
+@@ -219,10 +222,13 @@
+     {
+       long b1 = 0;
+       long b2 = 0;
+-      if(m_Left)
+-	b1 = m_Left->Eval(obj,lineno,src,linebuf,debugFlag,level+1,flag);
++      // apparently thay are in reverse order
+       if(m_Right)
+ 	b2 = m_Right->Eval(obj,lineno,src,linebuf,debugFlag,level+1,flag);
++      if (b2) { //short circuit boolean evaluation
++	if(m_Left)
++	  b1 = m_Left->Eval(obj,lineno,src,linebuf,debugFlag,level+1,flag);
++      }
+       if(b1 && b2)
+ 	b = 1;
+     }
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/ccdoc/test/test012.ok ccdoc_v07a/ccdoc_dev/ccdoc/test/test012.ok
+--- ccdoc_v07a.dist/ccdoc_dev/ccdoc/test/test012.ok	Tue Jun 15 19:12:18 1999
++++ ccdoc_v07a/ccdoc_dev/ccdoc/test/test012.ok	Sun Apr 15 00:08:20 2001
+@@ -1,4 +1,4 @@
+-../bin_MSWin32_dbg/ccdoc.exe -index test012.h
++../bin_linux_opt/ccdoc.exe -index test012.h
+ Loading 'ccdoc.ctf'
+ Phase 1: 1 files specified
+ CCDOC_PREP_DEBUG: Prep(test012.h,test012.h-PP)
+@@ -56,13 +56,11 @@
+ CCDOC_PREP_DEBUG:            4 ID  T SOL
+ CCDOC_PREP_DEBUG:        2 DEF
+ CCDOC_PREP_DEBUG:          3 ID  F HP
+-CCDOC_PREP_DEBUG: expr eval  4 ID          0
+-CCDOC_PREP_DEBUG: expr eval  3 DEF         0
++CCDOC_PREP_DEBUG: expr eval  3 ID          0
++CCDOC_PREP_DEBUG: expr eval  2 DEF         0
+ CCDOC_PREP_DEBUG: expr eval  4 ID          1
+ CCDOC_PREP_DEBUG: expr eval  3 DEF         1
+ CCDOC_PREP_DEBUG: expr eval  2 OR          1
+-CCDOC_PREP_DEBUG: expr eval  3 ID          0
+-CCDOC_PREP_DEBUG: expr eval  2 DEF         0
+ CCDOC_PREP_DEBUG: expr eval  1 OR          1
+ CCDOC_PREP_DEBUG: expr eval  0 IF          1
+ CCDOC_PREP_DEBUG: expr->Eval() == true
+@@ -108,10 +106,10 @@
+ CCDOC_PREP_DEBUG:          3 ID  T TEST09_SPAM
+ CCDOC_PREP_DEBUG:        2 DEF
+ CCDOC_PREP_DEBUG:          3 ID  F TEST09_FOO
+-CCDOC_PREP_DEBUG: expr eval  3 ID          1
+-CCDOC_PREP_DEBUG: expr eval  2 DEF         1
+ CCDOC_PREP_DEBUG: expr eval  3 ID          0
+ CCDOC_PREP_DEBUG: expr eval  2 DEF         0
++CCDOC_PREP_DEBUG: expr eval  3 ID          1
++CCDOC_PREP_DEBUG: expr eval  2 DEF         1
+ CCDOC_PREP_DEBUG: expr eval  1 OR          1
+ CCDOC_PREP_DEBUG: expr eval  0 IF          1
+ CCDOC_PREP_DEBUG: expr->Eval() == true
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/ccdoc/test/test031.ok ccdoc_v07a/ccdoc_dev/ccdoc/test/test031.ok
+--- ccdoc_v07a.dist/ccdoc_dev/ccdoc/test/test031.ok	Tue Jun 15 19:12:19 1999
++++ ccdoc_v07a/ccdoc_dev/ccdoc/test/test031.ok	Sun Apr 15 00:08:20 2001
+@@ -1,4 +1,4 @@
+-../bin_MSWin32_dbg/ccdoc.exe -index test031.h
++../bin_linux_opt/ccdoc.exe -index test031.h
+ Loading 'ccdoc.ctf'
+ Phase 1: 1 files specified
+ CCDOC_PREP_DEBUG: Prep(test031.h,test031.h-PP)
+@@ -22,8 +22,6 @@
+ CCDOC_PREP_DEBUG:          3 ID  F test031_E_macro
+ CCDOC_PREP_DEBUG:        2 DEF
+ CCDOC_PREP_DEBUG:          3 ID  T test031_D_macro
+-CCDOC_PREP_DEBUG: expr eval  3 ID          0
+-CCDOC_PREP_DEBUG: expr eval  2 DEF         0
+ CCDOC_PREP_DEBUG: expr eval  3 ID         30
+ CCDOC_PREP_DEBUG: expr eval  2 DEF        30
+ CCDOC_PREP_DEBUG: expr eval  1 OR          1
+@@ -37,8 +35,6 @@
+ CCDOC_PREP_DEBUG:          3 ID  F test031_E_macro
+ CCDOC_PREP_DEBUG:        2 DEF
+ CCDOC_PREP_DEBUG:          3 ID  T test031_B_macro
+-CCDOC_PREP_DEBUG: expr eval  3 ID          0
+-CCDOC_PREP_DEBUG: expr eval  2 DEF         0
+ CCDOC_PREP_DEBUG: expr eval  3 ID         10
+ CCDOC_PREP_DEBUG: expr eval  2 DEF        10
+ CCDOC_PREP_DEBUG: expr eval  1 OR          1
+@@ -52,6 +48,13 @@
+ CCDOC_PREP_DEBUG:        2 ID  F WINVER
+ CCDOC_PREP_DEBUG: expr eval  2 INTX     1024
+ CCDOC_PREP_DEBUG: ERROR
++
++================================================
++WARNING: Preprocessor macro 'WINVER' was not defined at line 21
++	in file test031.h.
++	line: #if (WINVER >= 0x400)
++
++================================================
+ CCDOC_PREP_DEBUG: expr eval  2 ID          0
+ CCDOC_PREP_DEBUG: expr eval  1 GE          0
+ CCDOC_PREP_DEBUG: expr eval  0 IF          0
+@@ -87,10 +90,3 @@
+ Updating xref ids ...
+ Writing repository data to 'ccdoc.ctf' ...
+ Completion status: 0 errors 1 warnings.
+-
+-================================================
+-WARNING: Preprocessor macro 'WINVER' was not defined at line 21
+-	in file test031.h.
+-	line: #if (WINVER >= 0x400)
+-
+-================================================
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/ccdoc/test/test032.ok ccdoc_v07a/ccdoc_dev/ccdoc/test/test032.ok
+--- ccdoc_v07a.dist/ccdoc_dev/ccdoc/test/test032.ok	Tue Jun 15 19:12:19 1999
++++ ccdoc_v07a/ccdoc_dev/ccdoc/test/test032.ok	Sun Apr 15 00:08:20 2001
+@@ -1,4 +1,4 @@
+-../bin_solaris_dbg/ccdoc.exe -index test032.h
++../bin_linux_opt/ccdoc.exe -index test032.h
+ Loading 'ccdoc.ctf'
+ Phase 1: 1 files specified
+ CCDOC_PREP_DEBUG: Prep(test032.h,test032.h-PP)
+@@ -28,11 +28,11 @@
+ d:0:$83 b:@author Foo
+ r:cmd:loc:r0:1:2:8:1:$0 0:
+ d:0:$84 d:@version spam
+-r:cls:loc:r0:1:3:8:3:$86 9:test032_A
++r:cls:loc:r0:1:3:9:3:$86 9:test032_A
+ d:0:$85 5:class
+ d:1:$86 9:test032_A
+ d:2:$7b 1:{
+-r:pri:pri:r0:2:0:8:0:$0 0:
++r:pri:pri:r0:2:0:9:0:$0 0:
+ Phase 2: generating the cross reference data.
+ Updating xref ids ...
+ Writing repository data to 'ccdoc.ctf' ...
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/libjdl/src/jdlhashtable.h ccdoc_v07a/ccdoc_dev/libjdl/src/jdlhashtable.h
+--- ccdoc_v07a.dist/ccdoc_dev/libjdl/src/jdlhashtable.h	Sat Apr 14 22:55:24 2001
++++ ccdoc_v07a/ccdoc_dev/libjdl/src/jdlhashtable.h	Sun Apr 15 00:08:20 2001
+@@ -68,7 +68,7 @@
+   /**
+    * Destructor.
+    */
+-  ~CJdlHashTable();
++  virtual ~CJdlHashTable();
+   /**
+    * Resize the hash table.
+    * This is a very costly operation because each entry has to
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/libjdl/src/jdlrbtreenode.cpp ccdoc_v07a/ccdoc_dev/libjdl/src/jdlrbtreenode.cpp
+--- ccdoc_v07a.dist/ccdoc_dev/libjdl/src/jdlrbtreenode.cpp	Sat Apr 14 22:55:23 2001
++++ ccdoc_v07a/ccdoc_dev/libjdl/src/jdlrbtreenode.cpp	Sun Apr 15 00:08:20 2001
+@@ -552,11 +552,11 @@
+   ::printf("%s %s",(const char*)m_Key,(IsRed()?"RED":"BLACK"));
+   if(!IsLeaf()) {
+     if(m_Left != 0)
+-      ::printf(" LEFT:",(const char*)m_Left->m_Key);
++      ::printf(" LEFT:%s",(const char*)m_Left->m_Key);
+     else
+       ::printf(" LEFT: ");
+     if(m_Right != 0)
+-      ::printf(" RIGHT:",(const char*)m_Right->m_Key);
++      ::printf(" RIGHT:%s",(const char*)m_Right->m_Key);
+     else
+       ::printf(" RIGHT: ");
+   }
+@@ -585,7 +585,7 @@
+   // Property 1. all nodes must be red or black.
+   for(nd=GetMinimum();nd!=0;nd = nd->GetSuccessor()) {
+     if(nd->m_Color != RED && nd->m_Color != BLACK) {
+-      ::printf("%sERROR: Node '%s' is not RED or BLACK.\n",(const char*)nd->m_Key);
++      ::printf("%sERROR: Node '%s' is not RED or BLACK.\n",prefix,(const char*)nd->m_Key);
+       ok = false;
+     }
+   }
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/libjdl/src/jdlsorter.h ccdoc_v07a/ccdoc_dev/libjdl/src/jdlsorter.h
+--- ccdoc_v07a.dist/ccdoc_dev/libjdl/src/jdlsorter.h	Sat Apr 14 22:55:24 2001
++++ ccdoc_v07a/ccdoc_dev/libjdl/src/jdlsorter.h	Sun Apr 15 00:08:20 2001
+@@ -105,12 +105,12 @@
+ // ========================================================================
+ template <class List,class Item>
+ CJdlSorter<List,Item>::CJdlSorter(List& list,int sizeofList)
+-  : m_List(list), m_Size(sizeofList)
++  : m_Size(sizeofList), m_List(list)
+ {
+ }
+ template <class List,class Item>
+ CJdlSorter<List,Item>::CJdlSorter(const CJdlSorter<List,Item>& x)
+-  : m_List(x.m_List),  m_Size(x.m_Size)
++  : m_Size(x.m_Size), m_List(x.m_List)
+ {
+ }
+ template <class List,class Item>
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/libjdl/src/jdlstring.cpp ccdoc_v07a/ccdoc_dev/libjdl/src/jdlstring.cpp
+--- ccdoc_v07a.dist/ccdoc_dev/libjdl/src/jdlstring.cpp	Sat Apr 14 22:55:23 2001
++++ ccdoc_v07a/ccdoc_dev/libjdl/src/jdlstring.cpp	Sun Apr 15 00:08:20 2001
+@@ -226,7 +226,7 @@
+     return;
+   }
+   // It's a large string, allocate space for it.
+-  const int alignmentFactor = 8; // align on an 8 byte boundary
++  const uint alignmentFactor = 8; // align on an 8 byte boundary
+ 
+   if(new_maxlen != m_Size || !m_String || m_String == m_Internal) {
+     // Allocate the new buffer on a boundary.
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/libjdl/test/suffix.mk ccdoc_v07a/ccdoc_dev/libjdl/test/suffix.mk
+--- ccdoc_v07a.dist/ccdoc_dev/libjdl/test/suffix.mk	Tue Jun 15 19:12:16 1999
++++ ccdoc_v07a/ccdoc_dev/libjdl/test/suffix.mk	Sun Apr 15 00:12:29 2001
+@@ -1,4 +1,5 @@
+ # $Id$
++.PHONY: test
+ test: all test_dbg test_opt
+ 
+ test_dbg: $(DBGTARGET)
+diff -urb -x *.[o~] -x *.exe -x *-PP ccdoc_v07a.dist/ccdoc_dev/tools/mkmk.pl ccdoc_v07a/ccdoc_dev/tools/mkmk.pl
+--- ccdoc_v07a.dist/ccdoc_dev/tools/mkmk.pl	Sat Apr 14 22:55:23 2001
++++ ccdoc_v07a/ccdoc_dev/tools/mkmk.pl	Sun Apr 15 00:08:20 2001
+@@ -165,8 +165,14 @@
+     }
+     else {
+ 	# UNIXes.
++	if( $arch eq "linux" ) {
++	    print MK "CPP         = gcc\n";
++	    print MK "CPPFLAGS1   = \n";
++	}
++	else {
+ 	print MK "CPP         = CC\n";
+ 	print MK "CPPFLAGS1   = -pto -pta +w\n";
++	}
+ 	print MK "CPPFLAGS2   = -DJDL_DEFINE_LOCAL_TYPES -DJDL_DEFINE_LOCAL_BOOLEAN\n";
+ 	print MK "CPPFLAGS3   = -I. -I../..\n";
+ 	print MK "CPPFLAGS4   = \$(MYCPPFLAGS)\n";

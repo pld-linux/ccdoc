@@ -6,7 +6,9 @@ Release:	1
 License:	Freely distributable
 Group:		Development/Tools
 Source0:	http://www.joelinoff.com/ccdoc_old/%{name}_v07a_src_taz.exe
+# Source0-md5:	dd9a24a374d10b00391d09a659878b28
 Source1:	ctf2xml.tar.gz
+# Source1-md5:	a6cdb81755e5d06e9d64162658127d76
 Patch0:		%{name}_v07a.medoosa.patch
 Patch1:		%{name}-opt.patch
 URL:		http://www.joelinoff.com/ccdoc/

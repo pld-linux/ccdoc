@@ -1,5 +1,5 @@
 Summary:	A program that generates HTML documentation from C++ source code
-Summary(pl):	Program generuj±cy dokumentacjê w HTML-u z kodu ¼ród³owego w C++
+Summary(pl.UTF-8):   Program generujÄ…cy dokumentacjÄ™ w HTML-u z kodu ÅºrÃ³dÅ‚owego w C++
 Name:		ccdoc
 Version:	0.7a
 Release:	1
@@ -20,10 +20,10 @@ The CcDoc tool is a javadoc like tool that automatically generates web
 documentation from C++ programs by parsing the source file headers.
 This release includes ctf2xml, required by the Medoosa project.
 
-%description -l pl
-CcDoc to narzêdzie podobne do javadoc, automatycznie generuj±ce
-dokumentacjê w formacie HTML z programów w C++ poprzez analizê plików
-nag³ówkowych ze ¼róde³. Ten pakiet zawiera ctf2xml, wymagany przez
+%description -l pl.UTF-8
+CcDoc to narzÄ™dzie podobne do javadoc, automatycznie generujÄ…ce
+dokumentacjÄ™ w formacie HTML z programÃ³w w C++ poprzez analizÄ™ plikÃ³w
+nagÅ‚Ã³wkowych ze ÅºrÃ³deÅ‚. Ten pakiet zawiera ctf2xml, wymagany przez
 projekt Medoosa.
 
 %prep

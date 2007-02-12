@@ -1,5 +1,5 @@
 Summary:	A program that generates HTML documentation from C++ source code
-Summary(pl.UTF-8):   Program generujący dokumentację w HTML-u z kodu źródłowego w C++
+Summary(pl.UTF-8):	Program generujący dokumentację w HTML-u z kodu źródłowego w C++
 Name:		ccdoc
 Version:	0.7a
 Release:	1

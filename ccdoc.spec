@@ -52,7 +52,7 @@ install ccdoc_dev/ccdoc/bin_linux_opt/ccdoc.exe $RPM_BUILD_ROOT%{_bindir}/ccdoc
 install ccdoc_dev/ccdoc/ctf2xml/ctf2xml2 $RPM_BUILD_ROOT%{_bindir}/ctf2xml2
 
 %clean
-rm -fr $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)

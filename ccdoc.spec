@@ -34,8 +34,8 @@ tar xfz %{SOURCE1}
 cd ../../ccdoc_dev
 perl tools/ccdoc_pc2unix.pl
 cd ..
-%patch0 -p1
-%patch1 -p1
+%patch -P0 -p1
+%patch -P1 -p1
 
 %build
 cd ccdoc_dev
